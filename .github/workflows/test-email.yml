@@ -1,0 +1,32 @@
+name: Test email
+
+# Manual-only: run this from the Actions tab to verify GMAIL_ADDRESS /
+# GMAIL_APP_PASSWORD / ALERT_RECIPIENT_EMAIL are set up correctly, without
+# needing a real watch or an actual showtime change.
+on:
+  workflow_dispatch:
+    inputs:
+      recipient:
+        description: "Send test to this address instead of the default (optional)"
+        required: false
+        default: ""
+
+jobs:
+  send-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send test email
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_RECIPIENT_EMAIL: ${{ secrets.ALERT_RECIPIENT_EMAIL }}
+          TEST_RECIPIENT: ${{ github.event.inputs.recipient }}
+        run: python scraper/test_email.py

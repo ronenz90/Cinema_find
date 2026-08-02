@@ -1,4 +1,4 @@
-# Cinema City Showtime Watcher (GitHub Pages + Worker + Actions)
+# Cinema City Showtime Watcher (GitHub Pages + Worker + Actions )
 
 מוגדר עבור: **ronenz90/Cinema_find**.
 

@@ -1,0 +1,9 @@
+name = "cinema-find-api"
+main = "index.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+[vars]
+GITHUB_OWNER = "ronenz90"
+GITHUB_REPO = "Cinema_find"
+ALLOWED_ORIGIN = "https://ronenz90.github.io"

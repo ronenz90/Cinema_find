@@ -99,22 +99,63 @@ for (const sel of [document.getElementById("hour_from"), document.getElementById
 document.getElementById("hour_from").value = "00";
 document.getElementById("hour_to").value = "23";
 
+let ALL_MOVIES = [];
+
 async function loadMoviesIntoDatalist() {
   try {
     const res = await fetch(`movies.json?_=${Date.now()}`);
     if (!res.ok) return;
-    const movies = await res.json();
-    const datalist = document.getElementById("movie-list");
-    datalist.innerHTML = "";
-    movies.forEach((title) => {
-      const opt = document.createElement("option");
-      opt.value = title;
-      datalist.appendChild(opt);
-    });
+    ALL_MOVIES = await res.json();
   } catch (e) {
     console.warn("Could not load movies.json (list refreshes nightly):", e);
   }
 }
+
+const movieInput = document.getElementById("movie");
+const suggestionsBox = document.getElementById("movie-suggestions");
+
+function renderSuggestions(matches) {
+  suggestionsBox.innerHTML = "";
+  if (!matches.length) {
+    suggestionsBox.classList.add("hidden");
+    return;
+  }
+  matches.slice(0, 8).forEach((title) => {
+    const item = document.createElement("div");
+    item.className = "suggestion-item";
+    item.textContent = title;
+    item.addEventListener("mousedown", (e) => {
+      // mousedown (not click) fires before the input's blur event hides the box
+      e.preventDefault();
+      movieInput.value = title;
+      suggestionsBox.classList.add("hidden");
+    });
+    suggestionsBox.appendChild(item);
+  });
+  suggestionsBox.classList.remove("hidden");
+}
+
+movieInput.addEventListener("input", () => {
+  const query = movieInput.value.trim();
+  if (!query || !ALL_MOVIES.length) {
+    suggestionsBox.classList.add("hidden");
+    return;
+  }
+  const matches = ALL_MOVIES.filter((title) => title.includes(query));
+  renderSuggestions(matches);
+});
+
+movieInput.addEventListener("focus", () => {
+  if (movieInput.value.trim() && ALL_MOVIES.length) {
+    const matches = ALL_MOVIES.filter((title) => title.includes(movieInput.value.trim()));
+    renderSuggestions(matches);
+  }
+});
+
+movieInput.addEventListener("blur", () => {
+  // slight delay so a suggestion's mousedown can still register first
+  setTimeout(() => suggestionsBox.classList.add("hidden"), 100);
+});
 
 // ============================================================
 // Helpers to open a pre-filled GitHub issue

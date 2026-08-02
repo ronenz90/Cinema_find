@@ -162,3 +162,34 @@ button.danger {
   border: 1px solid var(--accent);
   color: var(--accent);
 }
+
+.autocomplete-wrap {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  background: #12172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.suggestions .suggestion-item {
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestions .suggestion-item:last-child { border-bottom: none; }
+
+.suggestions .suggestion-item:hover,
+.suggestions .suggestion-item:active {
+  background: #1c2238;
+}

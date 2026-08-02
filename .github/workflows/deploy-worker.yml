@@ -1,0 +1,34 @@
+name: Deploy Cloudflare Worker
+
+# Auto-deploys worker/index.js to Cloudflare whenever it changes on main,
+# so you never need to open the Cloudflare dashboard's code editor again
+# after the one-time setup in the README. Just edit worker/index.js in
+# GitHub (web editor or the GitHub mobile app) and push/commit.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          secrets: |
+            GITHUB_TOKEN
+            PASSWORD_HASH
+        env:
+          # These become the Worker's runtime secrets (via `wrangler secret put`),
+          # kept separate from GitHub's own reserved GITHUB_TOKEN name.
+          GITHUB_TOKEN: ${{ secrets.WORKER_GITHUB_PAT }}
+          PASSWORD_HASH: ${{ secrets.WORKER_PASSWORD_HASH }}

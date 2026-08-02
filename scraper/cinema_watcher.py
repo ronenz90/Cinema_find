@@ -115,7 +115,13 @@ def scrape_showtimes(watch: Watch, headless: bool = True) -> Dict[str, List[str]
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)
         page = browser.new_page(locale="he-IL", viewport={"width": 1400, "height": 1000})
-        page.goto(BASE_URL, wait_until="networkidle", timeout=30000)
+        # NOTE: we intentionally do NOT wait_until="networkidle" here - the site
+        # has ongoing background requests (analytics, chat widgets, etc.) that
+        # never let the network go fully idle, which used to cause spurious
+        # 30s timeouts. Instead: wait for the DOM, then wait for the actual
+        # booking widget trigger to appear.
+        page.goto(BASE_URL, wait_until="domcontentloaded", timeout=45000)
+        page.wait_for_selector("a.b-theater", timeout=20000)
 
         try:
             page.click("text=אישור", timeout=4000)

@@ -1,0 +1,35 @@
+name: Index movie list
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # nightly at 02:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Index movies
+        run: python scraper/index_movies.py
+
+      - name: Commit updated movie list (if changed)
+        run: |
+          git config user.name "cinema-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/movies.json
+          git diff --staged --quiet || git commit -m "Nightly movie list refresh [skip ci]"
+          git push

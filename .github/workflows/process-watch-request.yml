@@ -1,0 +1,88 @@
+name: Process watch request
+
+# Triggered when the static site (GitHub Pages) opens a pre-filled issue,
+# for one of three actions depending on which label was used:
+#   watch-request -> add a new watch
+#   watch-edit    -> edit hour range / recipient email of an existing watch
+#   watch-delete  -> remove a watch
+# This is how the password-protected site manages watches without ever
+# needing a write-access token embedded in the public static page.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  process:
+    if: |
+      contains(github.event.issue.labels.*.name, 'watch-request') ||
+      contains(github.event.issue.labels.*.name, 'watch-edit') ||
+      contains(github.event.issue.labels.*.name, 'watch-delete')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine action from label
+        id: action
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(l => l.name);
+            let action = "add";
+            if (labels.includes("watch-edit")) action = "edit";
+            else if (labels.includes("watch-delete")) action = "delete";
+            core.setOutput("action", action);
+
+      - name: Save issue body to file
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync('issue_body.txt', context.payload.issue.body || '');
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Apply change to watches.json
+        run: |
+          python scraper/parse_issue.py \
+            --action "${{ steps.action.outputs.action }}" \
+            --issue-number "${{ github.event.issue.number }}" \
+            --body-file issue_body.txt
+
+      - name: Commit updated watches.json
+        run: |
+          git config user.name "cinema-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add config/watches.json
+          git diff --staged --quiet || git commit -m "${{ steps.action.outputs.action }} watch from issue #${{ github.event.issue.number }} [skip ci]"
+          git push
+
+      - name: Comment and close the issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const action = "${{ steps.action.outputs.action }}";
+            const messages = {
+              add: "✅ נוסף למעקב. תקבל/י מייל כשיתווספו תאריכים/שעות חדשים בטווח השעות שביקשת (הבדיקה הראשונה קובעת נקודת ייחוס, ללא התראה).",
+              edit: "✅ המעקב עודכן.",
+              delete: "✅ המעקב הוסר.",
+            };
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: messages[action] || "בוצע."
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: "closed"
+            });

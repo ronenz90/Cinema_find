@@ -7,7 +7,7 @@ const GITHUB_REPO = "Cinema_find";
 
 // Fill this in after deploying the Cloudflare Worker (see README) - e.g.
 // "https://cinema-find-api.yoursubdomain.workers.dev"
-const WORKER_URL = "REPLACE_WITH_YOUR_WORKER_URL";
+const WORKER_URL = "https://cinema-find-api.d-ron-d-ron1-2-3-9.workers.dev";
 
 // SHA-256 hash of the site password. This is only used for the *client-side*
 // gate (immediate UI feedback / hiding the form from casual visitors). The
